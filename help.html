@@ -1,0 +1,673 @@
+<!--
+ UnPlotter - PDF Data Extractor
+ Copyright (c) 2025 Robert McDonald
+ Licensed under the MIT License
+ See LICENSE file in the project root for full license information.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnPlotter Help - Documentation</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+          integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <style>.help-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .help-content h2 {
+            color: #3498db;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .help-content h3 {
+            color: #333;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .help-content p {
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .help-content ul, .help-content ol {
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .help-content li {
+            margin-bottom: 10px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tip {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .warning ul, .warning ol {
+            padding-left: 30px;
+        }
+
+        .tip {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tip ul, .tip ol {
+            padding-left: 30px;
+        }
+
+        .info {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info ul, .info ol {
+            padding-left: 30px;
+        }
+
+        .keyboard-shortcut {
+            display: inline-block;
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 2px 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .step-box {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .step-box h4 {
+            margin-top: 0;
+            color: #3498db;
+        }
+
+        .step-box ul, .step-box ol {
+            padding-left: 30px;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .toc {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            padding: 20px;
+            margin: 30px 0;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .toc li {
+            margin: 8px 0;
+        }
+
+        .toc a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .toc a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <table width="100%" border="0">
+            <tr>
+                <td align="left" width="33%"><a href="UnPlotter.html">
+                    <button type="button" class="btn"><i class="fas fa-rocket"></i> Launch UnPlotter
+                    </button>
+                </a></td>
+                <td align="center" width="33%"><h1>UnPlotter</h1></td>
+                <td align="right" width="33%">
+                    <a href="https://www.paypal.com/ncp/payment/KXTU4C3367A82">
+                        <button type="button" class="paypalbtn" style="object-position: -8px;">
+                            <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg"
+                                 alt="paypal" style="height: 1rem; position: relative; top: 3px; padding-right: 10px;">
+                            Tip
+                        </button>
+                    </a>
+                    <a href="https://github.com/ramcdona/unplotter">
+                        <button type="button" class="btn"><i class="fab fa-github"></i>
+                        </button>
+                    </a>
+                    <a href="index.html">
+                        <button type="button" class="btn"><i class="fa fa-home"></i>
+                        </button>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td align="left" width="33%"></td>
+                <td align="center" width="33%"><p class="subtitle">Extract numerical data from PDF figures</p></td>
+                <td align="right" width="33%"></td>
+            </tr>
+        </table>
+    </header>
+    <div class="help-content">
+        <h1 style="text-align: center; color: #3498db;">Help & Documentation</h1>
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li>
+                    <a href="#getting-started">Getting Started</a>
+                </li>
+                <li>
+                    <a href="#loading-pdf">Loading a PDF File</a>
+                </li>
+                <li>
+                    <a href="#navigation">Navigation & Viewing</a>
+                </li>
+                <li>
+                    <a href="#calibration">Axis Calibration</a>
+                </li>
+                <li>
+                    <a href="#curve-selection">Selecting & Labeling Curves</a>
+                </li>
+                <li>
+                    <a href="#export">Exporting Data</a>
+                </li>
+                <li>
+                    <a href="#tips">Tips & Best Practices</a>
+                </li>
+                <li>
+                    <a href="#vector">Vector vs. Raster Images</a>
+                </li>
+                <li>
+                    <a href="#raster">Digitizing Raster Images</a>
+                </li>
+                <li>
+                    <a href="#troubleshooting">Troubleshooting</a>
+                </li>
+                <li>
+                    <a href="#limitations">Limitations</a>
+                </li>
+                <li>
+                    <a href="#privacy">Privacy & Security</a>
+                </li>
+            </ul>
+        </div>
+        <h2 id="getting-started">Getting Started</h2>
+        <p>UnPlotter is a browser-based tool that extracts numerical data from vector plots in PDF files. The entire
+            process happens in your browser - your files are never uploaded to any server.</p>
+        <div class="info"><strong>💡 Quick Start:</strong> Load a PDF → Enable Selection → Calibrate Axes → Select Curves
+            → Export Data
+        </div>
+
+        <p>Watch this video for a quick demonstration of UnPlotter in action.</p>
+            <center>
+                <iframe width="560" height="315" src="https://www.youtube.com/embed/AkR6-IWVgBU?si=vK-1jLSOj3n0bmtj"
+                        title="YouTube video player" frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+            </center>
+
+        <div class="warning"><strong>⚠️ Important:</strong> UnPlotter only works with vector-based plots. Scanned images
+            or raster graphics in PDFs cannot be extracted.
+        </div>
+        <h2 id="loading-pdf">Loading a PDF File</h2>
+        <div class="step-box">
+            <h4>Step 1: Open UnPlotter</h4>
+            <p>Click the "Start UnPlotter" button from the home page or <a href="UnPlotter.html">click here</a>.</p>
+        </div>
+        <div class="step-box">
+            <h4>Step 2: Load Your PDF</h4>
+            <ol>
+                <li>Click the <strong>"📁 Load PDF File"</strong> button
+                </li>
+                <li>Select a PDF file from your computer</li>
+                <li>Wait for the PDF to load and render</li>
+            </ol>
+            <p>Once loaded, you'll see the first page of your PDF displayed in the viewer.</p>
+        </div>
+        <h2 id="navigation">Navigation & Viewing</h2>
+        <h3>Page Navigation</h3>
+        <div class="step-box">
+            <p>For multi-page PDFs, use the navigation controls:</p>
+            <ul>
+                <li>
+                    <strong>⇦ Previous</strong> - Go to the previous page
+                </li>
+                <li>
+                    <strong>⇨ Next</strong> - Go to the next page
+                </li>
+                <li>
+                    <strong>Page indicator</strong> - Shows current page / total pages
+                </li>
+            </ul>
+        </div>
+        <h3>Zoom Controls</h3>
+        <div class="step-box">
+            <p>Adjust the view to see details:</p>
+            <ul>
+                <li>
+                    <strong>+</strong> - Zoom in (increase size)
+                </li>
+                <li>
+                    <strong>-</strong> - Zoom out (decrease size)
+                </li>
+                <li>
+                    <strong>Zoom level</strong> - Shows current zoom percentage
+                </li>
+            </ul>
+        </div>
+        <h3>Rotation Controls</h3>
+        <div class="step-box">
+            <p>Rotate the PDF view if needed:</p>
+            <ul>
+                <li>
+                    <strong>↻</strong> - Rotate clockwise (90°)
+                </li>
+                <li>
+                    <strong>↺</strong> - Rotate counter-clockwise (90°)
+                </li>
+            </ul>
+        </div>
+        <div class="tip"><strong>💡 Tip:</strong> You can click and drag on the canvas to pan around when zoomed in.
+        </div>
+        <h2 id="calibration">Axis Calibration</h2>
+        <p>Calibration converts page coordinates from the PDF into real data values. This is a crucial step before
+            exporting data.</p>
+        <div class="step-box">
+            <h4>Step 1: Enable Selection Mode</h4>
+            <p>Click the <strong>"Enable Selection"</strong> button in the side panel. This reveals the calibration
+                section.</p>
+        </div>
+        <div class="step-box">
+            <h4>Step 2: Calibrate X-Axis</h4>
+            <ol>
+                <li>Click the <strong>"Select"</strong> button next to the X axis
+                </li>
+                <li>Click on a <strong>horizontal line</strong> that represents extent of the X-axis (or any horizontal
+                    reference line)
+                </li>
+                <li>Enter the <strong>minimum</strong> and <strong>maximum</strong> values for that line in the X Min
+                    and X Max fields
+                </li>
+            </ol>
+            <p>The status indicator will show ✓ when complete.</p>
+        </div>
+        <div class="step-box">
+            <h4>Step 3: Calibrate Y-Axis</h4>
+            <ol>
+                <li>Click the <strong>"Select"</strong> button next to the Y axis
+                </li>
+                <li>Click on a <strong>vertical line</strong> that represents extent of the Y-axis (or any vertical
+                    reference line)
+                </li>
+                <li>Enter the <strong>minimum</strong> and <strong>maximum</strong> values for that line in the Y Min
+                    and Y Max fields
+                </li>
+            </ol>
+            <p>The status indicator will show ✓ when complete.</p>
+        </div>
+        <div class="info"><strong>✅ Calibration Complete:</strong> When both axes are calibrated, you'll see "✅
+            Calibration Complete!" and the Export section will appear.
+        </div>
+        <div class="tip"><strong>💡 Tip:</strong> For best results, select reference lines that span a large portion of
+            the plot area. Axis lines work best, but any line with known coordinates will work.
+        </div>
+        <h2 id="curve-selection">Selecting & Labeling Curves</h2>
+        <p>Once selection mode is enabled, you can click on curves in the plot to extract them.</p>
+        <div class="step-box">
+            <h4>Selecting a Curve</h4>
+            <ol>
+                <li>Make sure <strong>"Enable Selection"</strong> is active (button should be highlighted)
+                </li>
+                <li>Click directly on any curve in the plot</li>
+                <li>The selected curve will be highlighted on the canvas</li>
+            </ol>
+        </div>
+        <div class="step-box">
+            <h4>Adding a Label</h4>
+            <ol>
+                <li>After selecting a curve, type a descriptive label in the text field (e.g., "Temperature",
+                    "Pressure", "Dataset A")
+                </li>
+                <li>Click the <strong>"Add"</strong> button or press <span class="keyboard-shortcut">Enter</span>
+                </li>
+                <li>The curve is now saved with its label and appears in the curve list</li>
+            </ol>
+        </div>
+        <div class="step-box">
+            <h4>Managing Curves</h4>
+            <ul>
+                <li>
+                    <strong>View curve list</strong> - All labeled curves appear in the "Curves" section
+                </li>
+                <li>
+                    <strong>Highlight curve</strong> - Click on a curve in the list to highlight it on the canvas
+                </li>
+                <li>
+                    <strong>Delete curve</strong> - Click the <strong>✕</strong> button next to a curve to remove it
+                </li>
+                <li>
+                    <strong>Delete all</strong> - Click <strong>"Delete All"</strong> to remove all labeled curves
+                </li>
+            </ul>
+        </div>
+        <div class="tip"><strong>💡 Tip:</strong> You can select and label multiple curves from the same plot. Each will
+            be exported as a separate dataset.
+        </div>
+        <h2 id="export">Exporting Data</h2>
+        <p>Once you've calibrated the axes and labeled at least one curve, you can export your data.</p>
+        <h3>Export Formats</h3>
+        <div class="step-box">
+            <h4>CSV (Comma-Separated Values)</h4>
+            <ul>
+                <li>Universal format compatible with Excel, Google Sheets, MATLAB, Python, R, and more</li>
+                <li>Each curve is exported as three columns (Label, X, Y)</li>
+                <li>Perfect for spreadsheet applications and data analysis</li>
+            </ul>
+            <h4>JSON (JavaScript Object Notation)</h4>
+            <ul>
+                <li>Structured format ideal for programming and web applications</li>
+                <li>Contains metadata including curve labels and point counts</li>
+                <li>Easy to parse in JavaScript, Python, and other languages</li>
+            </ul>
+        </div>
+        <div class="step-box">
+            <h4>Exporting Your Data</h4>
+            <ol>
+                <li>Scroll to the <strong>"Export Data"</strong> section (appears after calibration)
+                </li>
+                <li>Preview your data in the preview window</li>
+                <li>Click <strong>"📄 Download CSV"</strong> or <strong>"📋 Download JSON"</strong>
+                </li>
+                <li>The file will be saved to your downloads folder with a timestamp</li>
+            </ol>
+        </div>
+        <div class="info"><strong>📊 Data Preview:</strong> The export section shows a preview of the first 10 rows of
+            your data so you can verify it before downloading.
+        </div>
+        <h2 id="tips">Tips & Best Practices</h2>
+        <h3>Getting the Best Results</h3>
+        <div class="step-box">
+            <ul>
+                <li>
+                    <strong>Use vector PDFs</strong> - Make sure your PDF contains vector graphics, not scanned images
+                </li>
+                <li>
+                    <strong>Zoom for precision</strong> - Zoom in when selecting thin lines or closely-spaced curves
+                </li>
+                <li>
+                    <strong>Calibrate accurately</strong> - Use axis lines that span the full data range for best accuracy
+                </li>
+                <li>
+                    <strong>Label descriptively</strong> - Use clear, meaningful labels that describe each curve
+                </li>
+                <li>
+                    <strong>Check the preview</strong> - Always review the data preview before exporting
+                </li>
+                <li>
+                    <strong>Process one plot at a time</strong> - Navigate to the correct page before extracting data
+                </li>
+            </ul>
+        </div>
+
+
+        <h2 id="vector">Vector vs. Raster Images</h2>
+        <p>Computer image files are either vector or raster images. Vector images are made up of commands to draw lines
+            and curves, while raster images are made up of pixels.</p>
+        <p>UnPlotter only works with vector PDFs. Raster images cannot be processed.</p>
+        <h3>Identifying Whether an Image is a Vector or Raster</h3>
+        <p>The easiest way to tell if an image is a vector or a raster is to zoom in on it.</p>
+        <center><img src="images/example.png" alt="Example image" style="width: 100%; max-width: 600px;"></center>
+        <p>If it is a raster image, it will appear pixelated and blurry when zoomed in, like the image on the left. If
+            it is a vector image, it will appear smooth and sharp when zoomed in, like the image on the right.</p>
+        <center>
+            <div>
+                <figure style="display: inline-block;">
+                    <img src="images/example_raster_zoom.png" alt="Example raster image zoomed in"
+                         style="width: 100%; max-width: 300px; padding: 10px;">
+                    <figcaption>Example raster image zoomed in</figcaption>
+                </figure>
+                <figure style="display: inline-block;">
+                    <img src="images/example_vector_zoom.png" alt="Example vector image zoomed in"
+                         style="width: 100%; max-width: 300px; padding: 10px;">
+                    <figcaption>Example vector image zoomed in</figcaption>
+                </figure>
+            </div>
+        </center>
+
+        <h2 id="raster">Digitizing Raster Images</h2>
+        <h3>Q: My Image is a Raster Image, What Should I do?</h3>
+        <h3>A: Use <a href="https://plotdigitizer.com/" target="_blank" rel="noopener">Plot Digitizer</a>.</h3>
+        <div class="step-box">
+        <p>There have been many other programs for extracting data from raster images over the years.
+            <a href="https://plotdigitizer.com/" target="_blank" rel="noopener">Plot Digitizer</a> appears
+        to be the one that is most actively developed.</p>
+        </div>
+
+        <h2 id="troubleshooting">Troubleshooting</h2>
+        <h3>No curves appear when I click</h3>
+        <div class="warning">
+            <p><strong>Possible causes:</strong></p>
+            <ul>
+                <li>Selection mode is not enabled - click "Enable Selection" first</li>
+                <li>The PDF contains raster images, not vector paths</li>
+                <li>You're clicking between curves instead of directly on them</li>
+            </ul>
+            <p><strong>Solution:</strong> Try zooming in and clicking directly on the curve line. If still not working,
+                your PDF may not contain extractable vector data.</p>
+        </div>
+        <h3>Calibration not working</h3>
+        <div class="warning">
+            <p><strong>Possible causes:</strong></p>
+            <ul>
+                <li>You haven't entered min/max values after selecting the line</li>
+                <li>The selected line isn't perfectly horizontal (X-axis) or vertical (Y-axis)</li>
+            </ul>
+            <p><strong>Solution:</strong> Make sure to fill in both min and max values for each axis. Select lines that
+                are as straight as possible.</p>
+        </div>
+        <h3>Exported data looks wrong</h3>
+        <div class="warning">
+            <p><strong>Possible causes:</strong></p>
+            <ul>
+                <li>Calibration values were entered incorrectly</li>
+                <li>Wrong curve was selected</li>
+                <li>PDF contains complex overlapping paths</li>
+            </ul>
+            <p><strong>Solution:</strong> Reset calibration and try again. Double-check your min/max values match the
+                actual axis values. Preview data before exporting.</p>
+        </div>
+        <h3>Browser performance issues</h3>
+        <div class="tip">
+            <p>For very large PDFs:</p>
+            <ul>
+                <li>Close other browser tabs</li>
+                <li>Use a modern browser (Chrome, Firefox, Edge, Safari)</li>
+                <li>Process one page at a time</li>
+            </ul>
+        </div>
+        <h2 id="limitations">Limitations</h2>
+        <div class="step-box">
+            <p>UnPlotter is a powerful tool, but it has some limitations:</p>
+            <ul>
+                <li>
+                    <strong>Vector graphics only</strong> - Cannot extract from scanned images or raster plots
+                </li>
+                <li>
+                    <strong>Linear axes only</strong> - Logarithmic or polar scales require manual post-processing
+                </li>
+                <li>
+                    <strong>2D plots only</strong> - 3D plots and surface plots are not supported
+                </li>
+                <li>
+                    <strong>Manual calibration</strong> - Axes must be calibrated manually (no automatic detection)
+                </li>
+                <li>
+                    <strong>No image recognition</strong> - Cannot recognize or extract data from bitmap images embedded in
+                    PDFs
+                </li>
+            </ul>
+        </div>
+        <h2 id="privacy">Privacy & Security</h2>
+        <p>Your privacy is important. UnPlotter is designed with privacy in mind:</p>
+        <div class="info">
+            <h3>100% Local Processing</h3>
+            <ul>
+                <li>
+                    <strong>No uploads</strong> - Your PDF files never leave your computer
+                </li>
+                <li>
+                    <strong>No servers</strong> - All processing happens in your browser
+                </li>
+                <li>
+                    <strong>No tracking</strong> - We don't collect any data about your usage
+                </li>
+                <li>
+                    <strong>No accounts</strong> - No registration or login required
+                </li>
+            </ul>
+        </div>
+        <h3>How It Works</h3>
+        <div class="step-box">
+            <p>UnPlotter uses browser-based technologies (PDF.js, Canvas API) to process your files entirely within your web
+                browser. When you load a PDF file:</p>
+            <ol>
+                <li>The file is read from your local filesystem</li>
+                <li>PDF.js parses the file in browser memory</li>
+                <li>Vector paths are extracted and displayed on a Canvas element</li>
+                <li>Exported data is generated and downloaded directly</li>
+            </ol>
+            <p>At no point is any data transmitted over the internet (except for initially loading the UnPlotter application
+                itself).</p>
+        </div>
+        <h3>Open Source</h3>
+        <div class="step-box">
+            <p>UnPlotter is open source software. You can:</p>
+            <ul>
+                <li>View the complete source code on <a href="https://github.com/ramcdona/unplotter">GitHub</a>
+                </li>
+                <li>Run it locally on your own computer</li>
+                <li>Modify it for your own needs</li>
+            </ul>
+        </div>
+
+        <h3>Free</h3>
+        <div class="step-box">
+            <p>UnPlotter is totally free:</p>
+            <ul>
+                <li>There is no cost to use UnPlotter</li>
+                <li>There is no advertising</li>
+                <li>There is no tracking of users</li>
+            </ul>
+        </div>
+
+        <div style="
+            text-align: center;
+            margin: 40px 0;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="margin-bottom: 20px;
+            color: #333;">Support UnPlotter!</h2>
+                <p style="margin-bottom: 30px;">If you find UnPlotter useful, please consider some support:</p>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <style>.pp-KXTU4C3367A82 {
+                    text-align: center;
+                    border: none;
+                    border-radius: 0.25rem;
+                    min-width: 11.625rem;
+                    padding: 0 2rem;
+                    height: 2.625rem;
+                    font-weight: bold;
+                    background-color: #FFD140;
+                    color: #000000;
+                    font-family: "Helvetica Neue", Arial, sans-serif;
+                    font-size: 1rem;
+                    line-height: 1.25rem;
+                    cursor: pointer;
+                }</style>
+                <form action="https://www.paypal.com/ncp/payment/KXTU4C3367A82" method="post" target="_blank"
+                      style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
+                    <input class="pp-KXTU4C3367A82" type="submit" value="Tip"/>
+                    <img src=https://www.paypalobjects.com/images/Debit_Credit_APM.svg alt="cards"/>
+                    <section style="font-size: 0.75rem;"> Powered by <img
+                            src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal"
+                            style="height:0.875rem;vertical-align:middle;"/></section>
+                </form>
+            </div>
+        </div>
+
+        <h2>Need More Help?</h2>
+        <div class="step-box">
+            <p>If you're still having trouble or have questions:</p>
+            <ul>
+                <li>
+                    <strong>GitHub Issues</strong> - Report bugs or request features at <a
+                        href="https://github.com/ramcdona/unplotter/issues">github.com/ramcdona/unplotter/issues</a>
+                </li>
+                <li>
+                    <strong>Source Code</strong> - Explore the code at <a href="https://github.com/ramcdona/unplotter">github.com/ramcdona/unplotter</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <footer style="text-align: center; padding: 40px 20px; border-top: 1px solid #e0e0e0; margin-top: 60px; color: #666;">
+        <p><strong>UnPlotter</strong> - Open Source PDF Data Extractor<br>
+            Licensed under the MIT License | <a href="https://github.com/ramcdona/unplotter">View
+                on GitHub</a></p>
+        <p style="margin-top: 20px; font-size: 0.9em;">
+            Copyright © 2025 Robert McDonald </p>
+    </footer>
+</div>
+</body>
+</html>

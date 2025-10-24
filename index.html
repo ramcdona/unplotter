@@ -1,0 +1,395 @@
+<!--
+ UnPlotter - PDF Data Extractor
+ Copyright (c) 2025 Robert McDonald
+ Licensed under the MIT License
+ See LICENSE file in the project root for full license information.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnPlotter - Extract Data from PDF Plots</title>
+    <meta name="description"
+          content="Free browser-based tool to extract numerical data from vector plots in PDF files. No upload required - all processing happens in your browser.">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+          integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
+
+    <style>
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: #3498db;
+            color: white;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .hero h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .hero p {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .cta-button {
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            background: white;
+            color: #3498db;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature {
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .feature:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .feature h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .steps {
+            margin: 60px 0;
+        }
+
+        .steps h2 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #333;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .step-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .step-content h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .benefits {
+            background: #f5f5f5;
+            padding: 40px;
+            border-radius: 8px;
+            margin: 40px 0;
+        }
+
+        .benefits h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .benefits ul {
+            list-style: none;
+            padding: 0;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .benefits ul ul {
+            margin: 0 30px;
+        }
+
+        .benefits li {
+            padding: 15px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .benefits li:last-child {
+            border-bottom: none;
+        }
+
+        .benefits li:before {
+            content: "✓ ";
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .benefits ul ul li {
+            padding: 0 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .benefits ul ul li:before {
+            content: "";
+        }
+
+        .call-to-action {
+            text-align: center;
+            padding: 60px 20px;
+            margin: 40px 0;
+        }
+
+        .call-to-action h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <table width="100%" border="0">
+            <tr>
+                <td align="left" width="33%">
+                </td>
+                <td align="center" width="33%">
+                    <h1>UnPlotter</h1>
+                </td>
+                <td align="right" width="33%">
+                    <a href="https://www.paypal.com/ncp/payment/KXTU4C3367A82">
+                        <button type="button" class="paypalbtn" style="object-position: -8px;">
+                            <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg"
+                                 alt="paypal" style="height: 1rem; position: relative; top: 3px; padding-right: 10px;">
+                            Tip
+                        </button>
+                    </a>
+                    <a href="https://github.com/ramcdona/unplotter">
+                        <button type="button" class="btn">
+                            <i class="fab fa-github"></i>
+                        </button>
+                    </a>
+                    <a href="help.html">
+                        <button type="button" class="btn">
+                            <i class="fas fa-question"></i>
+                        </button>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td align="left" width="33%"></td>
+                <td align="center" width="33%">
+                    <p class="subtitle">Extract numerical data from PDF figures</p>
+                </td>
+                <td align="right" width="33%">
+                </td>
+            </tr>
+        </table>
+    </header>
+
+    <div class="hero">
+        <h2>Turn PDF Plots Into Data</h2>
+        <p>Extract numerical data from technical plots and graphs in seconds</p>
+        <a href="UnPlotter.html" class="cta-button">
+            <i class="fas fa-rocket"></i> Launch UnPlotter
+        </a>
+    </div>
+
+    <div class="features">
+        <div class="feature">
+            <div class="feature-icon">🖥️</div>
+            <h3>Browser-Based</h3>
+            <p>No installation required. Works entirely in your browser with no server uploads.</p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">📄</div>
+            <h3>PDF Support</h3>
+            <p>Load and extract data from multi-page PDF documents with vector graphics.</p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">📏</div>
+            <h3>Axis Calibration</h3>
+            <p>Convert pixel coordinates to real data values with simple axis calibration.</p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">🏷️</div>
+            <h3>Curve Labeling</h3>
+            <p>Organize multiple curves with custom labels for easy data management.</p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">📊</div>
+            <h3>Export Options</h3>
+            <p>Download extracted data as CSV or JSON for use in your favorite tools.</p>
+        </div>
+
+        <div class="feature">
+            <div class="feature-icon">🔒</div>
+            <h3>Privacy First</h3>
+            <p>Your files never leave your computer. All processing is 100% local.</p>
+        </div>
+    </div>
+
+    <div class="steps">
+        <h2>How It Works</h2>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+                <h3>Load Your PDF</h3>
+                <p>Load a PDF file containing the plot or graph you want to extract data from.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+                <h3>Calibrate Axes</h3>
+                <p>Select reference lines defining X and Y axis limits and enter their min/max data values to establish
+                    coordinate scaling.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+                <h3>Select & Label Curves</h3>
+                <p>Click on curves to select them and assign meaningful labels for to keep your data organized.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">4</div>
+            <div class="step-content">
+                <h3>Export Your Data</h3>
+                <p>Download the extracted data as CSV or JSON files for further analysis.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="benefits">
+        <h2>Quick Start</h2>
+        <center>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/AkR6-IWVgBU?si=vK-1jLSOj3n0bmtj"
+                    title="YouTube video player" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </center>
+    </div>
+
+    <div class="benefits">
+        <h2>Why UnPlotter?</h2>
+        <ul>
+            <li>Extract data from research papers and technical reports</li>
+            <li>Digitize plots from legacy documents</li>
+            <li>Recreate datasets for analysis, visualization, comparisons, etc.</li>
+            <li>Save time compared to manual data entry</li>
+            <li>Highest possible accuracy</li>
+            <li>Open source</li>
+            <li>Free to use
+                <ul>
+                    <li>Contributions are appreciated if you find UnPlotter useful</li>
+                </ul>
+            </li>
+            <li>Works offline once loaded</li>
+            <li>No file size limits or processing quotas</li>
+            <li>Simple easy to use interface</li>
+        </ul>
+    </div>
+
+    <div class="call-to-action">
+        <h2>Ready to Extract Your Data?</h2>
+        <p style="margin-bottom: 30px;">Get started in seconds - no signup required</p>
+        <a href="UnPlotter.html" class="cta-button">
+            <i class="fas fa-play"></i> Start Extracting
+        </a>
+        <p style="margin-top: 20px;">
+            <a href="help.html">Need help? View the documentation →</a>
+        </p>
+    </div>
+
+    <div style="
+            text-align: center;
+            margin: 40px 0;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="margin-bottom: 20px;
+            color: #333;">Support UnPlotter!</h2>
+            <p style="margin-bottom: 30px;">If you find UnPlotter useful, please consider some support:</p>
+        </div>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <style>.pp-KXTU4C3367A82 {
+                text-align: center;
+                border: none;
+                border-radius: 0.25rem;
+                min-width: 11.625rem;
+                padding: 0 2rem;
+                height: 2.625rem;
+                font-weight: bold;
+                background-color: #FFD140;
+                color: #000000;
+                font-family: "Helvetica Neue", Arial, sans-serif;
+                font-size: 1rem;
+                line-height: 1.25rem;
+                cursor: pointer;
+            }</style>
+            <form action="https://www.paypal.com/ncp/payment/KXTU4C3367A82" method="post" target="_blank"
+                  style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
+                <input class="pp-KXTU4C3367A82" type="submit" value="Tip"/>
+                <img src=https://www.paypalobjects.com/images/Debit_Credit_APM.svg alt="cards"/>
+                <section style="font-size: 0.75rem;"> Powered by <img
+                        src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal"
+                        style="height:0.875rem;vertical-align:middle;"/></section>
+            </form>
+        </div>
+    </div>
+
+
+    <footer style="text-align: center; padding: 40px 20px; border-top: 1px solid #e0e0e0; margin-top: 60px; color: #666;">
+        <p>
+            <strong>UnPlotter</strong> - Open Source PDF Data Extractor<br>
+            Licensed under the MIT License |
+            <a href="https://github.com/ramcdona/unplotter">View on GitHub</a>
+        </p>
+        <p style="margin-top: 20px; font-size: 0.9em;">
+            Copyright © 2025 Robert McDonald
+        </p>
+    </footer>
+</div>
+</body>
+</html>
