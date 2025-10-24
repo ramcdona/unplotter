@@ -5,7 +5,6 @@
 UnPlotter is a browser-based tool that allows you to extract data from technical plots and graphs embedded in PDF documents. Simply load a PDF, calibrate the axes, select curves, and export the data as CSV or JSON.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://ramcdona.github.io/unplotter)
 
 ## Features
 
@@ -47,16 +46,8 @@ UnPlotter is a browser-based tool that allows you to extract data from technical
 
 Hopefully UnPlotter saves you time or enables you to do something cool.
 
-If you find UnPlotter useful, please consider supporting the project.
-
-<div style="text-align:center;">
-<style>.pp-KXTU4C3367A82{text-align:center;border:none;border-radius:0.25rem;min-width:11.625rem;padding:0 2rem;height:2.625rem;font-weight:bold;background-color:#FFD140;color:#000000;font-family:"Helvetica Neue",Arial,sans-serif;font-size:1rem;line-height:1.25rem;cursor:pointer;}</style>
-<form action="https://www.paypal.com/ncp/payment/KXTU4C3367A82" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
-<input class="pp-KXTU4C3367A82" type="submit" value="Tip" />
-<img src=https://www.paypalobjects.com/images/Debit_Credit_APM.svg alt="cards" />
-<section style="font-size: 0.75rem;"> Powered by <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal" style="height:0.875rem;vertical-align:middle;"/></section>
-</form>
-</div>
+If you find UnPlotter useful, please consider supporting the project by making a contribution
+via [PayPal](https://www.paypal.com/ncp/payment/KXTU4C3367A82).
 
 ## Development
 
@@ -118,5 +109,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 If you encounter any issues or have questions:
 - Open an [issue](https://github.com/ramcdona/unplotter/issues) on GitHub
 - Check the [help page](https://ramcdona.github.io/unplotter/help.html) for documentation
-
-** If you find this tool useful, please consider giving it a star on GitHub!**
