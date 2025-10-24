@@ -1,0 +1,21 @@
+{
+  "name": "unplotter",
+  "version": "1.0.0",
+  "description": "Extract numerical data from PDF figures",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx serve . -l 3000"
+  },
+  "keywords": ["pdf", "data-extraction", "plotting"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "pdfjs-dist": "^4.10.38",
+    "papaparse": "^5.4.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.1"
+  }
+}

@@ -1,0 +1,196 @@
+<!--
+ UnPlotter - PDF Data Extractor
+ Copyright (c) 2025 Robert McDonald
+ Licensed under the MIT License
+ See LICENSE file in the project root for full license information.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UnPlotter - PDF Data Extractor</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css" integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+<div class="container">
+    <header>
+        <table  width="100%" border="0">
+            <tr>
+                <td align="left" width="33%">
+                </td>
+                <td align="center" width="33%">
+                    <h1>UnPlotter</h1>
+                </td>
+                <td align="right" width="33%">
+                    <a href="https://www.paypal.com/ncp/payment/KXTU4C3367A82">
+                        <button type="button" class="paypalbtn" style="object-position: -8px;">
+                            <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg"
+                                 alt="paypal" style="height: 1rem; position: relative; top: 3px; padding-right: 10px;"> Tip
+                        </button>
+                    </a>
+                    <a href="https://github.com/ramcdona/unplotter">
+                        <button type="button" class="btn">
+                            <i class="fab fa-github"></i>
+                        </button>
+                    </a>
+                    <a href="help.html">
+                        <button type="button" class="btn">
+                            <i class="fas fa-question"></i>
+                        </button>
+                    </a>
+                    <a href="index.html">
+                        <button type="button" class="btn">
+                            <i class="fa fa-home"></i>
+                        </button>
+                    </a>
+                </td>
+            </tr>
+            <tr>
+                <td align="left" width="33%"></td>
+                <td align="center" width="33%">
+                    <p class="subtitle">Extract numerical data from PDF figures</p>
+                </td>
+                <td align="right" width="33%">
+                </td>
+            </tr>
+
+        </table>
+    </header>
+
+    <div class="main-content">
+        <!-- PDF Viewer Section -->
+        <section class="viewer-section" id="viewerSection">
+            <div class="file-controls">
+                <input type="file" id="fileInput" accept=".pdf" style="display: none;">
+                <button id="uploadBtn" class="btn btn-primary">
+                    📁 Load PDF File
+                </button>
+                <span class="file-info" id="fileInfo">No file loaded</span>
+
+                <div class="nav-controls" id="navControls" style="display: none;">
+                    <button id="prevPage" class="btn">⇦</button>
+                    <span class="page-info">
+                        <span id="pageNum">1</span> / <span id="pageCount">1</span>
+                    </span>
+                    <button id="nextPage" class="btn">⇨</button>
+                </div>
+
+                <div class="zoom-controls" id="zoomControls" style="display: none;">
+                    <button id="zoomOut" class="btn">-</button>
+                    <span id="zoomLevel">100%</span>
+                    <button id="zoomIn" class="btn">+</button>
+                </div>
+
+                <div class="rotation-controls" id="rotationControls" style="display: none;">
+                    <button id="rotateCounterClockwiseBtn" class="btn">↺</button>
+                    <button id="rotateClockwiseBtn" class="btn">↻</button>
+                </div>
+            </div>
+
+            <div class="content-wrapper">
+                <div class="canvas-container" id="canvasContainer">
+                    <div class="canvas-placeholder">
+                        <p>👆 Load a PDF file to get started</p>
+                    </div>
+                    <canvas id="pdfCanvas"></canvas>
+                </div>
+
+                <!-- Side Panel -->
+                <div class="side-panel" id="sidePanel" style="display: none;">
+                    <div class="resize-handle" id="resizeHandle"></div>
+
+                    <!-- Selection Controls at top of side panel -->
+                    <div class="panel-selection-controls" id="panelSelectionControls">
+                        <button id="toggleSelection" class="btn btn-toggle">
+                            Enable Selection
+                        </button>
+                    </div>
+
+                    <!-- Curve Labeling Section -->
+                    <div class="labeling-section" id="labelingSection">
+                        <h3>Curves</h3>
+                        <p class="labeling-instruction">Click on a curve to select it, then enter a label to add it.</p>
+
+                        <div class="label-input-group">
+                            <input type="text" id="curveLabel" placeholder="Enter curve label (e.g., 'Temperature', 'Pressure')" />
+                            <button id="saveCurveLabel" class="btn btn-primary">Add</button>
+                            <button id="deleteAllLabels" class="btn btn-warning">Delete All</button>
+                        </div>
+
+                        <div class="curve-browser">
+<!--                            <div class="browser-controls">-->
+
+<!--                            </div>-->
+                            <ul id="curveList" class="curve-list">
+                                <li class="empty-message">No curves added yet</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Calibration Section -->
+                    <div class="calibration-section" id="calibrationSection" style="display: none;">
+                        <h3>Axis Calibration</h3>
+                        <p class="calibration-instruction">Select a line segment for each axis and enter its min/max values in data coordinates.</p>
+
+                        <div class="calibration-grid">
+                            <div class="axis-calibration">
+                                <div class="calibration-points">
+                                    <div class="point-input">
+                                        <h4>X</h4>
+                                        <button id="selectXAxis" class="btn btn-calibrate">Select</button>
+                                        <input type="number" id="xMinValue" placeholder="X Min" step="any">
+                                        <input type="number" id="xMaxValue" placeholder="X Max" step="any">
+                                        <span id="xAxisStatus" class="status-indicator">○</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="axis-calibration">
+                                <div class="calibration-points">
+                                    <div class="point-input">
+                                        <h4>Y</h4>
+                                        <button id="selectYAxis" class="btn btn-calibrate">Select</button>
+                                        <input type="number" id="yMinValue" placeholder="Y Min" step="any">
+                                        <input type="number" id="yMaxValue" placeholder="Y Max" step="any">
+                                        <span id="yAxisStatus" class="status-indicator">○</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="calibration-actions">
+                            <button id="resetCalibration" class="btn">🔄 Reset Calibration</button>
+                            <div class="calibration-status" id="calibrationStatus">
+                                <span class="status-text">Not calibrated</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Section -->
+                    <div class="export-section" id="exportSection" style="display: none;">
+                        <h3>Export Data</h3>
+                        <p class="export-instruction">Download the extracted and calibrated data grouped by curve labels.</p>
+
+                        <div class="export-options">
+                            <div class="export-buttons">
+                                <button id="exportCSV" class="btn btn-export">📄 Download CSV</button>
+                                <button id="exportJSON" class="btn btn-export">📋 Download JSON</button>
+                            </div>
+
+                            <div class="export-preview" id="exportPreview">
+                                <h4>Preview (first 10 rows)</h4>
+                                <pre id="previewContent"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
