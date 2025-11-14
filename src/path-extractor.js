@@ -503,6 +503,19 @@ export class PathExtractor {
                     const cp3 = this.applyTransform(points[pointIndex++], points[pointIndex++], this.currentTransform);
                     this.addCommand('C', cp1.x, cp1.y, cp2.x, cp2.y, cp3.x, cp3.y);
                     break;
+                case OPS.curveTo2:
+                    const c2_1 = this.applyTransform(points[pointIndex++], points[pointIndex++], this.currentTransform);
+                    const p3 = this.applyTransform(points[pointIndex++], points[pointIndex++], this.currentTransform);
+
+
+                    this.addCommand('V', c2_1.x, c2_1.y, p3.x, p3.y);
+                    break;
+                case OPS.curveTo3:
+                    const c3_1 = this.applyTransform(points[pointIndex++], points[pointIndex++], this.currentTransform);
+                    const p4 = this.applyTransform(points[pointIndex++], points[pointIndex++], this.currentTransform);
+
+                    this.addCommand('Y', c3_1.x, c3_1.y, p4.x, p4.y);
+                    break;
                 case OPS.closePath:
                     this.addCommand('Z');
                     break;
