@@ -96,6 +96,10 @@ class UnPlotApp {
         this.resetCalibrationBtn = document.getElementById('resetCalibration');
         this.calibrationStatus = document.getElementById('calibrationStatus');
 
+        // New: log scale checkboxes
+        this.xLogScaleCheckbox = document.getElementById('xLogScale');
+        this.yLogScaleCheckbox = document.getElementById('yLogScale');
+
         // Export elements
         this.exportSection = document.getElementById('exportSection');
         this.exportCSVBtn = document.getElementById('exportCSV');
@@ -143,6 +147,19 @@ class UnPlotApp {
         this.yMaxInput.addEventListener('change', () => this.updateCalibrationValue('y', 'end'));
 
         this.resetCalibrationBtn.addEventListener('click', () => this.resetCalibration());
+
+        // New: log-scale change listeners
+        if (this.xLogScaleCheckbox) {
+            this.xLogScaleCheckbox.addEventListener('change', () => {
+                this.updateScaleType('x');
+            });
+        }
+
+        if (this.yLogScaleCheckbox) {
+            this.yLogScaleCheckbox.addEventListener('change', () => {
+                this.updateScaleType('y');
+            });
+        }
 
         // Export event listeners
         this.exportCSVBtn.addEventListener('click', () => this.exportData('csv'));
@@ -612,6 +629,31 @@ class UnPlotApp {
         });
     }
 
+    updateScaleType(axis) {
+        let checkbox;
+        if (axis === 'x') {
+            checkbox = this.xLogScaleCheckbox;
+        } else {
+            checkbox = this.yLogScaleCheckbox;
+        }
+
+        if (!checkbox) {
+            return;
+        }
+
+        const isLog = checkbox.checked;
+        if (isLog) {
+            this.axisCalibrator.setScaleType(axis, 'log');
+        } else {
+            this.axisCalibrator.setScaleType(axis, 'linear');
+        }
+
+        // If already calibrated and curves exist, update export preview
+        if (this.axisCalibrator.isCalibrated && this.labeledCurves.length > 0) {
+            this.updateExportPreview();
+        }
+    }
+
     resetCalibration() {
         this.axisCalibrator.reset();
 
@@ -619,6 +661,13 @@ class UnPlotApp {
         this.xMaxInput.value = '';
         this.yMinInput.value = '';
         this.yMaxInput.value = '';
+
+        if (this.xLogScaleCheckbox) {
+            this.xLogScaleCheckbox.checked = false;
+        }
+        if (this.yLogScaleCheckbox) {
+            this.yLogScaleCheckbox.checked = false;
+        }
 
         ['xAxisStatus', 'yAxisStatus'].forEach(id => {
             const element = document.getElementById(id);

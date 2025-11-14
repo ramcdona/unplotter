@@ -17,6 +17,12 @@ export class AxisCalibrator {
             yAxis: { min: null, max: null }
         };
         
+        // Track scale type for each axis: 'linear' or 'log'
+        this.scaleType = {
+            xAxis: 'linear',
+            yAxis: 'linear'
+        };
+
         this.isCalibrated = false;
     }
 
@@ -89,6 +95,23 @@ export class AxisCalibrator {
         return this.isCalibrated;
     }
 
+    setScaleType(axis, type) {
+        const axisKey = axis === 'x' ? 'xAxis' : 'yAxis';
+
+        if (type !== 'linear' && type !== 'log') {
+            console.error('Invalid scale type:', type);
+            return;
+        }
+
+        this.scaleType[axisKey] = type;
+        console.log(`Set ${axis}-axis scale type to`, type);
+    }
+
+    getScaleType(axis) {
+        const axisKey = axis === 'x' ? 'xAxis' : 'yAxis';
+        return this.scaleType[axisKey];
+    }
+
     getScaleFactors() {
         if (!this.isCalibrated) {
             return null;
@@ -136,9 +159,24 @@ export class AxisCalibrator {
         console.log(`X: PDF range [${xPdfMin.toFixed(2)}, ${xPdfMax.toFixed(2)}] -> Data range [${xValues.min}, ${xValues.max}]`);
         console.log(`Y: PDF range [${yPdfMin.toFixed(2)}, ${yPdfMax.toFixed(2)}] -> Data range [${yValues.min}, ${yValues.max}]`);
 
+        // Include PDF min/max so log-space mapping can use them
         return {
-            x: { scale: xScale, offset: xOffset, min: xValues.min, max: xValues.max },
-            y: { scale: yScale, offset: yOffset, min: yValues.min, max: yValues.max }
+            x: {
+                scale: xScale,
+                offset: xOffset,
+                min: xValues.min,
+                max: xValues.max,
+                pdfMin: xPdfMin,
+                pdfMax: xPdfMax
+            },
+            y: {
+                scale: yScale,
+                offset: yOffset,
+                min: yValues.min,
+                max: yValues.max,
+                pdfMin: yPdfMin,
+                pdfMax: yPdfMax
+            }
         };
     }
 
@@ -148,9 +186,59 @@ export class AxisCalibrator {
             return null;
         }
 
+        const xScaleType = this.getScaleType('x');
+        const yScaleType = this.getScaleType('y');
+
+        let xValue;
+        let yValue;
+
+        // X axis conversion
+        if (xScaleType === 'log') {
+            if (factors.x.min <= 0 || factors.x.max <= 0) {
+                console.error('X-axis log scale requires positive min and max data values');
+                return null;
+            }
+
+            const xPdfRange = factors.x.pdfMax - factors.x.pdfMin;
+            if (xPdfRange === 0) {
+                console.error('X-axis log scale error: PDF range is zero');
+                return null;
+            }
+
+            const xT = (pdfX - factors.x.pdfMin) / xPdfRange;
+            const xLogMin = Math.log10(factors.x.min);
+            const xLogMax = Math.log10(factors.x.max);
+            const xLogValue = xLogMin + xT * (xLogMax - xLogMin);
+            xValue = Math.pow(10, xLogValue);
+        } else {
+            xValue = pdfX * factors.x.scale + factors.x.offset;
+        }
+
+        // Y axis conversion
+        if (yScaleType === 'log') {
+            if (factors.y.min <= 0 || factors.y.max <= 0) {
+                console.error('Y-axis log scale requires positive min and max data values');
+                return null;
+            }
+
+            const yPdfRange = factors.y.pdfMax - factors.y.pdfMin;
+            if (yPdfRange === 0) {
+                console.error('Y-axis log scale error: PDF range is zero');
+                return null;
+            }
+
+            const yT = (pdfY - factors.y.pdfMin) / yPdfRange;
+            const yLogMin = Math.log10(factors.y.min);
+            const yLogMax = Math.log10(factors.y.max);
+            const yLogValue = yLogMin + yT * (yLogMax - yLogMin);
+            yValue = Math.pow(10, yLogValue);
+        } else {
+            yValue = pdfY * factors.y.scale + factors.y.offset;
+        }
+
         return {
-            x: pdfX * factors.x.scale + factors.x.offset,
-            y: pdfY * factors.y.scale + factors.y.offset
+            x: xValue,
+            y: yValue
         };
     }
 
@@ -165,6 +253,11 @@ export class AxisCalibrator {
             yAxis: { min: null, max: null }
         };
         
+        this.scaleType = {
+            xAxis: 'linear',
+            yAxis: 'linear'
+        };
+
         this.isCalibrated = false;
     }
 
@@ -174,7 +267,8 @@ export class AxisCalibrator {
             xAxisCalibrated: this.isAxisCalibrated('x'),
             yAxisCalibrated: this.isAxisCalibrated('y'),
             segments: this.calibrationSegments,
-            values: this.calibrationValues
+            values: this.calibrationValues,
+            scaleType: this.scaleType
         };
     }
 }
