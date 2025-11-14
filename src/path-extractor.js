@@ -528,12 +528,112 @@ export class PathExtractor {
         }, 0);
     }
 
+    // --- Curve tessellation helpers ----------------------------------------
+
+    /**
+     * Euclidean distance between two points
+     */
+    _dist(a, b) {
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    /**
+     * Distance from point p to (infinite) line through p0 and p1
+     * (used similarly to dist_pnt_2_line in the C++ code)
+     */
+    _distPointToLine(p0, p1, p) {
+        const vx = p1.x - p0.x;
+        const vy = p1.y - p0.y;
+        const wx = p.x - p0.x;
+        const wy = p.y - p0.y;
+
+        const len2 = vx * vx + vy * vy;
+        if (len2 < Number.EPSILON) {
+            // Line is degenerate; fall back to simple point distance.
+            return this._dist(p0, p);
+        }
+
+        // Perpendicular distance to infinite line
+        const cross = Math.abs(vx * wy - vy * wx);
+        return cross / Math.sqrt(len2);
+    }
+
+    /**
+     * Evaluate cubic Bézier at parameter t in [0,1].
+     * P(t) = (1-t)^3 P0 + 3(1-t)^2 t P1 + 3(1-t) t^2 P2 + t^3 P3
+     */
+    _evalCubicBezier(p0, p1, p2, p3, t) {
+        const mt = 1 - t;
+        const mt2 = mt * mt;
+        const t2 = t * t;
+
+        const a = mt2 * mt;        // (1-t)^3
+        const b = 3 * mt2 * t;     // 3(1-t)^2 t
+        const c = 3 * mt * t2;     // 3(1-t) t^2
+        const d = t * t2;          // t^3
+
+        return {
+            x: a * p0.x + b * p1.x + c * p2.x + d * p3.x,
+            y: a * p0.y + b * p1.y + c * p2.y + d * p3.y
+        };
+    }
+
+    /**
+     * Recursive adaptive tessellation of a parametric curve.
+     * compFn(u) returns a point {x, y} on the curve for u in [0,1].
+     */
+    _tessAdapt(umin, umax, pmin, pmax, points, compFn, tol, nLimit, nAdapt) {
+        const umid = (umin + umax) * 0.5;
+        const pmid = compFn(umid);
+
+        const len = this._dist(pmin, pmax);
+        let d = 0;
+
+        if (len > Number.EPSILON) {
+            d = this._distPointToLine(pmin, pmax, pmid) / len;
+        }
+
+        if ((len > Number.EPSILON && d > tol && nLimit > 0) || nAdapt < 3) {
+            // Subdivide further
+            this._tessAdapt(umin, umid, pmin, pmid, points, compFn, tol, nLimit - 1, nAdapt + 1);
+            this._tessAdapt(umid, umax, pmid, pmax, points, compFn, tol, nLimit - 1, nAdapt + 1);
+        } else {
+            // Accept this segment: add start and midpoint
+            points.push(pmin);
+            points.push(pmid);
+        }
+    }
+
+    /**
+     * Tessellate a cubic Bézier (for C, V, Y curves) into a polyline.
+     * Returns an array of points from t=0 to t=1 (inclusive).
+     */
+    _tessellateCubicBezier(p0, p1, p2, p3, tol = 0.01, maxDepth = 10) {
+        const compFn = (t) => this._evalCubicBezier(p0, p1, p2, p3, t);
+        const pmin = compFn(0.0); // should be p0
+        const pmax = compFn(1.0); // should be p3
+
+        const points = [];
+        this._tessAdapt(0.0, 1.0, pmin, pmax, points, compFn, tol, maxDepth, 0);
+
+        // Final point (equivalent to pmax / t=1)
+        points.push(pmax);
+
+        return points;
+    }
+
     /**
      * Get curves as polylines (connected line segments)
      * Each curve is represented as an array of points
      */
     getCurves() {
         const curves = [];
+
+        // Tune these as needed
+        const CURVE_TOLERANCE = 0.01; // smaller => more points, more accurate
+        const CURVE_MAX_DEPTH = 10;   // recursion limit / max subdivisions
 
         for (let pathIndex = 0; pathIndex < this.paths.length; pathIndex++) {
             const path = this.paths[pathIndex];
@@ -575,14 +675,59 @@ export class PathExtractor {
 
                     case 'C':
                     case 'V':
-                    case 'Y':
-                        // For curves, just add the endpoint
-                        currentPos = {
-                            x: cmd.coords[cmd.coords.length - 2],
-                            y: cmd.coords[cmd.coords.length - 1]
-                        };
-                        polyline.push({ ...currentPos });
+                    case 'Y': {
+                        const coords = cmd.coords;
+                        const p0 = { ...currentPos };
+                        let p1, p2, p3;
+
+                        switch (cmd.type) {
+                            case 'C':
+                                // (x1 y1 x2 y2 x3 y3)
+                                p1 = { x: coords[0], y: coords[1] };
+                                p2 = { x: coords[2], y: coords[3] };
+                                p3 = { x: coords[4], y: coords[5] };
+                                break;
+
+                            case 'V':
+                                // PDF 'v': first control point is current point
+                                // (x2 y2 x3 y3)
+                                p1 = { ...currentPos };
+                                p2 = { x: coords[0], y: coords[1] };
+                                p3 = { x: coords[2], y: coords[3] };
+                                break;
+
+                            case 'Y':
+                                // PDF 'y': second control point is endpoint
+                                // (x1 y1 x3 y3)
+                                p1 = { x: coords[0], y: coords[1] };
+                                p3 = { x: coords[2], y: coords[3] };
+                                p2 = { ...p3 };
+                                break;
+
+                            default:
+                                throw new Error(`Unsupported curve type: ${cmd.type}`);
+                        }
+
+                        const curvePoints = this._tessellateCubicBezier(
+                            p0, p1, p2, p3,
+                            CURVE_TOLERANCE,
+                            CURVE_MAX_DEPTH
+                        );
+
+                        for (let i = 0; i < curvePoints.length; i++) {
+                            const pt = curvePoints[i];
+                            if (polyline.length > 0) {
+                                const last = polyline[polyline.length - 1];
+                                if (last.x === pt.x && last.y === pt.y) {
+                                    continue;
+                                }
+                            }
+                            polyline.push({ ...pt });
+                        }
+
+                        currentPos = { ...p3 };
                         break;
+                    }
                 }
             }
 
