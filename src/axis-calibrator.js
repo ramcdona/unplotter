@@ -23,6 +23,9 @@ export class AxisCalibrator {
             yAxis: 'linear'
         };
 
+        // Current page rotation (0, 90, 180, 270)
+        this.rotation = 0;
+
         this.isCalibrated = false;
     }
 
@@ -31,6 +34,33 @@ export class AxisCalibrator {
             axis: axis,
             message: `Click on a line segment representing the ${axis.toUpperCase()}-axis`
         };
+    }
+
+    setRotation(rotationDegrees) {
+        // Normalize to 0, 90, 180, 270
+        const r = ((rotationDegrees % 360) + 360) % 360;
+        this.rotation = r;
+        console.log('AxisCalibrator rotation set to', this.rotation);
+    }
+
+    _mapPdfToAxisSpace(pdfX, pdfY) {
+        // Map raw PDF coordinates (as used in PathExtractor) into
+        // "axis space" that matches the on-screen X and Y directions
+        // after rotation.
+        switch (this.rotation) {
+            case 90:
+                // Rotate 90° CW: (x, y) -> (y, -x)
+                return { x: pdfY, y: -pdfX };
+            case 180:
+                // 180°: (x, y) -> (-x, -y)
+                return { x: -pdfX, y: -pdfY };
+            case 270:
+                // 270° CW (or 90° CCW): (x, y) -> (-y, x)
+                return { x: -pdfY, y: pdfX };
+            case 0:
+            default:
+                return { x: pdfX, y: pdfY };
+        }
     }
 
     setCalibrationSegment(axis, segment) {
@@ -50,18 +80,20 @@ export class AxisCalibrator {
     }
     
     extractMinMaxFromPoints(points) {
-        // Find the minimum and maximum X and Y coordinates in the path
+        // Find the minimum and maximum coordinates in axis space
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
         
         for (const point of points) {
-            if (point.x < minX) minX = point.x;
-            if (point.x > maxX) maxX = point.x;
-            if (point.y < minY) minY = point.y;
-            if (point.y > maxY) maxY = point.y;
+            const axisPoint = this._mapPdfToAxisSpace(point.x, point.y);
+
+            if (axisPoint.x < minX) minX = axisPoint.x;
+            if (axisPoint.x > maxX) maxX = axisPoint.x;
+            if (axisPoint.y < minY) minY = axisPoint.y;
+            if (axisPoint.y > maxY) maxY = axisPoint.y;
         }
         
-        // Return as a segment-like object with min/max coordinates
+        // Return as a segment-like object with min/max coordinates in axis space
         return {
             x1: minX,
             y1: minY,
@@ -121,7 +153,7 @@ export class AxisCalibrator {
         const xSegment = this.calibrationSegments.xAxis;
         const xValues = this.calibrationValues.xAxis;
         
-        // Segment already contains min/max values as x1/x2
+        // Segment already contains min/max values as x1/x2 in axis space
         const xPdfMin = xSegment.x1;
         const xPdfMax = xSegment.x2;
         const xPdfDistance = xPdfMax - xPdfMin;
@@ -129,7 +161,7 @@ export class AxisCalibrator {
         
         // Guard against zero distance
         if (xPdfDistance === 0) {
-            console.error('X-axis calibration error: selected path has no horizontal extent');
+            console.error('X-axis calibration error: selected path has no horizontal extent (axis space)');
             return null;
         }
         
@@ -140,7 +172,7 @@ export class AxisCalibrator {
         const ySegment = this.calibrationSegments.yAxis;
         const yValues = this.calibrationValues.yAxis;
         
-        // Segment already contains min/max values as y1/y2
+        // Segment already contains min/max values as y1/y2 in axis space
         const yPdfMin = ySegment.y1;
         const yPdfMax = ySegment.y2;
         const yPdfDistance = yPdfMax - yPdfMin;
@@ -148,18 +180,18 @@ export class AxisCalibrator {
         
         // Guard against zero distance
         if (yPdfDistance === 0) {
-            console.error('Y-axis calibration error: selected path has no vertical extent');
+            console.error('Y-axis calibration error: selected path has no vertical extent (axis space)');
             return null;
         }
         
         const yScale = yDataDistance / yPdfDistance;
         const yOffset = yValues.min - (yPdfMin * yScale);
 
-        console.log('Scale factors calculated:');
-        console.log(`X: PDF range [${xPdfMin.toFixed(2)}, ${xPdfMax.toFixed(2)}] -> Data range [${xValues.min}, ${xValues.max}]`);
-        console.log(`Y: PDF range [${yPdfMin.toFixed(2)}, ${yPdfMax.toFixed(2)}] -> Data range [${yValues.min}, ${yValues.max}]`);
+        console.log('Scale factors calculated (axis space):');
+        console.log(`X: axis range [${xPdfMin.toFixed(2)}, ${xPdfMax.toFixed(2)}] -> Data range [${xValues.min}, ${xValues.max}]`);
+        console.log(`Y: axis range [${yPdfMin.toFixed(2)}, ${yPdfMax.toFixed(2)}] -> Data range [${yValues.min}, ${yValues.max}]`);
 
-        // Include PDF min/max so log-space mapping can use them
+        // Include axis-space min/max so log-space mapping can use them
         return {
             x: {
                 scale: xScale,
@@ -186,13 +218,18 @@ export class AxisCalibrator {
             return null;
         }
 
+        // Map raw PDF coordinates into axis space first
+        const axisPoint = this._mapPdfToAxisSpace(pdfX, pdfY);
+        const axisX = axisPoint.x;
+        const axisY = axisPoint.y;
+
         const xScaleType = this.getScaleType('x');
         const yScaleType = this.getScaleType('y');
 
         let xValue;
         let yValue;
 
-        // X axis conversion
+        // X axis conversion (axis space)
         if (xScaleType === 'log') {
             if (factors.x.min <= 0 || factors.x.max <= 0) {
                 console.error('X-axis log scale requires positive min and max data values');
@@ -201,20 +238,20 @@ export class AxisCalibrator {
 
             const xPdfRange = factors.x.pdfMax - factors.x.pdfMin;
             if (xPdfRange === 0) {
-                console.error('X-axis log scale error: PDF range is zero');
+                console.error('X-axis log scale error: axis range is zero');
                 return null;
             }
 
-            const xT = (pdfX - factors.x.pdfMin) / xPdfRange;
+            const xT = (axisX - factors.x.pdfMin) / xPdfRange;
             const xLogMin = Math.log10(factors.x.min);
             const xLogMax = Math.log10(factors.x.max);
             const xLogValue = xLogMin + xT * (xLogMax - xLogMin);
             xValue = Math.pow(10, xLogValue);
         } else {
-            xValue = pdfX * factors.x.scale + factors.x.offset;
+            xValue = axisX * factors.x.scale + factors.x.offset;
         }
 
-        // Y axis conversion
+        // Y axis conversion (axis space)
         if (yScaleType === 'log') {
             if (factors.y.min <= 0 || factors.y.max <= 0) {
                 console.error('Y-axis log scale requires positive min and max data values');
@@ -223,17 +260,17 @@ export class AxisCalibrator {
 
             const yPdfRange = factors.y.pdfMax - factors.y.pdfMin;
             if (yPdfRange === 0) {
-                console.error('Y-axis log scale error: PDF range is zero');
+                console.error('Y-axis log scale error: axis range is zero');
                 return null;
             }
 
-            const yT = (pdfY - factors.y.pdfMin) / yPdfRange;
+            const yT = (axisY - factors.y.pdfMin) / yPdfRange;
             const yLogMin = Math.log10(factors.y.min);
             const yLogMax = Math.log10(factors.y.max);
             const yLogValue = yLogMin + yT * (yLogMax - yLogMin);
             yValue = Math.pow(10, yLogValue);
         } else {
-            yValue = pdfY * factors.y.scale + factors.y.offset;
+            yValue = axisY * factors.y.scale + factors.y.offset;
         }
 
         return {

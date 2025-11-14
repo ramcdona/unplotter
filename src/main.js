@@ -40,6 +40,9 @@ class UnPlotApp {
         this.panScrollLeft = 0;
         this.panScrollTop = 0;
 
+        // Initialize calibrator with current rotation (usually 0)
+        this.axisCalibrator.setRotation(this.pdfLoader.getRotation());
+
         this.initializeUI();
     }
 
@@ -724,6 +727,9 @@ class UnPlotApp {
 
         const rotation = this.pdfLoader.getRotation();
         console.log(`Rotating view to ${rotation}°`);
+
+        // Inform calibrator about new rotation so axis space matches screen
+        this.axisCalibrator.setRotation(rotation);
 
         // Re-render the current page with new rotation
         await this.renderCurrentPage();
