@@ -22,7 +22,12 @@
                 <td align="left" width="33%">
                 </td>
                 <td align="center" width="33%">
-                    <h1>UnPlotter</h1>
+                    <h1>
+                        UnPlotter
+                        <span id="appVersion">
+                            <!-- version filled dynamically -->
+                        </span>
+                    </h1>
                 </td>
                 <td align="right" width="33%">
                     <a href="https://www.paypal.com/ncp/payment/KXTU4C3367A82">
@@ -192,5 +197,38 @@
     </div>
 </div>
 <script type="module" src="src/main.js"></script>
+
+<script type="module">
+    async function setAppVersion() {
+        try {
+            const response = await fetch('/package.json');
+            if (!response.ok) {
+                console.error('Failed to load package.json, status:', response.status);
+                return;
+            }
+
+            const pkg = await response.json();
+            const versionElement = document.getElementById('appVersion');
+            if (!versionElement) {
+                console.error('Version element #appVersion not found in header');
+                return;
+            }
+
+            let versionText = 'v';
+            if (pkg && typeof pkg.version === 'string') {
+                versionText += pkg.version;
+            } else {
+                versionText += 'unknown';
+            }
+
+            versionElement.textContent = versionText;
+        } catch (error) {
+            console.error('Error loading app version:', error);
+        }
+    }
+
+    setAppVersion();
+</script>
+
 </body>
 </html>
