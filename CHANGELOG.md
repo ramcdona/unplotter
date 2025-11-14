@@ -6,6 +6,13 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 ---
 
+## [1.1.1] - 2025-11-14
+
+### Fixed
+- Fixed parsing two-point curveto commands in Construct Path block.
+
+---
+
 ## [1.1.0] - 2025-11-14
 
 ### Added
