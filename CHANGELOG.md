@@ -6,6 +6,13 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 ---
 
+## [1.2.1] - 2025-11-14
+
+### Fixed
+- Delay handling of rotated axes until after data extraction.
+
+---
+
 ## [1.2.0] - 2025-11-14
 
 ### Added
