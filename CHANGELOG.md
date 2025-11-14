@@ -6,7 +6,7 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 ---
 
-## [Unreleased]
+## [1.1.0] - 2025-11-14
 
 ### Added
 - Adaptive tessellation of PDF path curves into polylines.
