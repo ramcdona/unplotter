@@ -23,6 +23,12 @@ export class AxisCalibrator {
             yAxis: 'linear'
         };
 
+        // Store original calibration curve points in PDF coordinates
+        this.calibrationCurves = {
+            xAxis: null,
+            yAxis: null
+        };
+
         // Current page rotation (0, 90, 180, 270)
         this.rotation = 0;
 
@@ -41,6 +47,10 @@ export class AxisCalibrator {
         const r = ((rotationDegrees % 360) + 360) % 360;
         this.rotation = r;
         console.log('AxisCalibrator rotation set to', this.rotation);
+
+        // Recompute calibration segments in axis space for new rotation
+        this._recomputeSegmentForAxis('xAxis');
+        this._recomputeSegmentForAxis('yAxis');
     }
 
     _mapPdfToAxisSpace(pdfX, pdfY) {
@@ -63,14 +73,27 @@ export class AxisCalibrator {
         }
     }
 
+    _recomputeSegmentForAxis(axisKey) {
+        const points = this.calibrationCurves[axisKey];
+        if (!points || points.length === 0) {
+            return;
+        }
+
+        const segment = this.extractMinMaxFromPoints(points);
+        this.calibrationSegments[axisKey] = segment;
+        console.log(`Recomputed ${axisKey} segment for rotation ${this.rotation}:`, segment);
+    }
+
     setCalibrationSegment(axis, segment) {
         const axisKey = axis === 'x' ? 'xAxis' : 'yAxis';
         
-        // If segment is actually a curve with points array, extract min/max
+        // If segment is actually a curve with points array, store original points (PDF coords)
         if (segment.points && segment.points.length > 0) {
+            this.calibrationCurves[axisKey] = segment.points;
             this.calibrationSegments[axisKey] = this.extractMinMaxFromPoints(segment.points);
         } else {
-            // Legacy support for simple segment objects
+            // Legacy support for simple segment objects; no points to recompute
+            this.calibrationCurves[axisKey] = null;
             this.calibrationSegments[axisKey] = segment;
         }
         
@@ -293,6 +316,11 @@ export class AxisCalibrator {
         this.scaleType = {
             xAxis: 'linear',
             yAxis: 'linear'
+        };
+
+        this.calibrationCurves = {
+            xAxis: null,
+            yAxis: null
         };
 
         this.isCalibrated = false;
