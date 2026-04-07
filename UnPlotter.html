@@ -114,14 +114,29 @@
                 <div class="side-panel" id="sidePanel" style="display: none;">
                     <div class="resize-handle" id="resizeHandle"></div>
 
-                    <!-- Selection Controls at top of side panel -->
-                    <div class="panel-selection-controls" id="panelSelectionControls">
+                    <!-- Mode Controls at top of side panel -->
+                    <div class="panel-mode-controls" id="panelModeControls">
                         <button id="toggleSelection" class="btn btn-toggle">
-                            Enable Selection
+                            Curve Selection
+                        </button>
+                        <button id="toggleImageExport" class="btn btn-toggle">
+                            Image Export
                         </button>
                     </div>
 
-                    <!-- Curve Labeling Section -->
+                    <!-- Raster Images Section (shown in Image Export mode) -->
+                    <div class="images-section" id="imagesSection" style="display: none;">
+                        <h3>Raster Images</h3>
+                        <p class="labeling-instruction">Click an image on the PDF or a row below to select it.</p>
+                        <ul id="imageList" class="image-list">
+                            <li class="empty-message">No raster images detected on this page</li>
+                        </ul>
+                        <div style="margin-top: 0.5rem;">
+                            <button id="saveImagePNG" class="btn btn-primary" disabled>Save as PNG</button>
+                        </div>
+                    </div>
+
+                    <!-- Curve Labeling Section (shown in Curve Selection mode) -->
                     <div class="labeling-section" id="labelingSection">
                         <h3>Curves</h3>
                         <p class="labeling-instruction" id="labelingInstruction">Click on a curve to select it, then enter a label to add it.</p>

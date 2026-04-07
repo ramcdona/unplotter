@@ -191,17 +191,19 @@ header h1 {
 }
 
 /* Panel Selection Controls */
-.panel-selection-controls {
+.panel-selection-controls,
+.panel-mode-controls {
     padding: 1rem;
     background: #e8f4f8;
     border-bottom: 2px solid #3498db;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.5rem;
 }
 
-.panel-selection-controls .btn {
-    width: 100%;
+.panel-selection-controls .btn,
+.panel-mode-controls .btn {
+    flex: 1;
     justify-content: center;
 }
 
@@ -847,4 +849,72 @@ header h1 {
     .resize-handle {
         display: none;
     }
+}
+
+/* ── Raster Images Section ───────────────────────────────────────────────── */
+
+.images-section {
+    padding: 1.5rem;
+    background: #e8f5e9;
+    border-bottom: 2px solid #4caf50;
+}
+
+.images-section h3 {
+    margin-top: 0;
+    color: #1b5e20;
+    font-size: 1.1rem;
+}
+
+.images-section .labeling-instruction {
+    color: #2e7d32;
+}
+
+.image-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.5rem 0;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.image-list .empty-message {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+}
+
+.image-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.4rem;
+    background: #f1f8e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.image-list-item:hover {
+    background: #dcedc8;
+    border-color: #81c784;
+}
+
+.image-list-item.active {
+    background: #c8e6c9;
+    border-color: #4caf50;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
+}
+
+.image-label {
+    font-weight: 600;
+    color: #1b5e20;
+    font-size: 0.9rem;
+}
+
+.image-details {
+    color: #388e3c;
+    font-size: 0.8rem;
 }

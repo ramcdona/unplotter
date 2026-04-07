@@ -10,19 +10,23 @@ import { PathExtractor } from './path-extractor.js';
 import { CanvasOverlay } from './canvas-overlay.js';
 import { AxisCalibrator } from './axis-calibrator.js';
 import { DataExporter } from './data-exporter.js';
+import { ImageExtractor } from './image-extractor.js';
 
 class UnPlotApp {
     constructor() {
         this.pdfLoader = new PDFLoader();
         this.pathExtractor = new PathExtractor(this.pdfLoader);
+        this.imageExtractor = new ImageExtractor(this.pdfLoader);
         this.canvasOverlay = null;
         this.axisCalibrator = new AxisCalibrator();
         this.dataExporter = new DataExporter();
+        this.selectedImage = null; // currently selected raster image for export
 
         this.currentPageNum = 1;
         this.totalPages = 0;
         this.extractedPaths = [];
         this.selectionMode = false;
+        this.imageExportMode = false;
         this.calibrationMode = false;
         this.pendingCalibration = null;
 
@@ -86,8 +90,9 @@ class UnPlotApp {
         this.rotateCounterClockwiseBtn = document.getElementById('rotateCounterClockwiseBtn');
         this.rotationControls = document.getElementById('rotationControls');
 
-        // Selection controls (now in side panel)
-        this.toggleSelectionBtn = document.getElementById('toggleSelection');
+        // Mode controls (top of side panel)
+        this.toggleSelectionBtn   = document.getElementById('toggleSelection');
+        this.toggleImageExportBtn = document.getElementById('toggleImageExport');
 
         // Side panel
         this.sidePanel = document.getElementById('sidePanel');
@@ -144,6 +149,11 @@ class UnPlotApp {
         this.perpSelectAxisLabelEl   = document.getElementById('perpSelectAxisLabel');
         this.perpRefDataValueInput   = document.getElementById('perpRefDataValue');
 
+        // Raster images elements
+        this.imagesSection  = document.getElementById('imagesSection');
+        this.imageList      = document.getElementById('imageList');
+        this.saveImageBtn   = document.getElementById('saveImagePNG');
+
         // Export elements
         this.exportSection = document.getElementById('exportSection');
         this.exportCSVBtn = document.getElementById('exportCSV');
@@ -164,6 +174,9 @@ class UnPlotApp {
         this.zoomInBtn.addEventListener('click', () => this.changeZoom(0.25));
         this.zoomOutBtn.addEventListener('click', () => this.changeZoom(-0.25));
         this.toggleSelectionBtn.addEventListener('click', () => this.toggleSelectionMode());
+        if (this.toggleImageExportBtn) {
+            this.toggleImageExportBtn.addEventListener('click', () => this.toggleImageExportMode());
+        }
 
         // Rotation event listeners
         this.rotateClockwiseBtn.addEventListener('click', () => this.rotateView(90));
@@ -239,6 +252,11 @@ class UnPlotApp {
             this.yLogScaleCheckbox.addEventListener('change', () => {
                 this.updateScaleType('y');
             });
+        }
+
+        // Raster image event listeners
+        if (this.saveImageBtn) {
+            this.saveImageBtn.addEventListener('click', () => this.saveSelectedImageAsPNG());
         }
 
         // Export event listeners
@@ -388,9 +406,33 @@ class UnPlotApp {
 
             await this.extractPathsFromCurrentPage();
             this.setupCanvasOverlay(result.page);
+            // Image extraction runs after the overlay is set up so it can
+            // immediately pass image metadata to the overlay for display.
+            await this.extractImagesFromCurrentPage();
             this.updateThumbnailHighlight();
         } else {
             console.error(`Error rendering page: ${result.error}`);
+        }
+    }
+
+    async extractImagesFromCurrentPage() {
+        const page = this.pdfLoader.getCurrentPageObject();
+        if (!page) return;
+
+        try {
+            const images = await this.imageExtractor.extractImages(page, this.currentPageNum);
+
+            // Pass images to overlay so it can draw bounding rectangles.
+            if (this.canvasOverlay) {
+                this.canvasOverlay.setImages(images);
+            }
+
+            // Update the Images panel.
+            this.updateImageList(images);
+
+            console.log(`✓ Found ${images.length} raster image(s) on page`);
+        } catch (e) {
+            console.warn('Image extraction failed:', e);
         }
     }
 
@@ -414,9 +456,6 @@ class UnPlotApp {
                 console.log(`✓ Sample curve: ${curves[0].points.length} points`);
             }
 
-            console.log('Extracted paths:', this.extractedPaths);
-            console.log('Curves:', curves);
-
         } catch (error) {
             console.error(`Error extracting paths: ${error.message}`, error);
         }
@@ -429,7 +468,7 @@ class UnPlotApp {
 
         this.canvasOverlay = new CanvasOverlay(this.canvas, this.pathExtractor, page);
         this.canvasOverlay.setScale(this.pdfLoader.getScale());
-        this.canvasOverlay.setRotation(this.pdfLoader.getRotation()); // Add rotation
+        this.canvasOverlay.setRotation(this.pdfLoader.getRotation());
 
         if (this.multiSelectMode) {
             this.canvasOverlay.setMultiSelectMode(true);
@@ -439,12 +478,29 @@ class UnPlotApp {
             this.handleCurveSelection(e.detail);
         });
 
+        this.canvasOverlay.overlayCanvas.addEventListener('imageSelected', (e) => {
+            this.handleImageSelection(e.detail.image);
+        });
+
         if (this.selectionMode) {
             this.canvasOverlay.enableSelectionMode(true);
+        } else if (this.imageExportMode) {
+            this.canvasOverlay.enableImageMode(true);
         }
     }
 
     toggleSelectionMode() {
+        // Deactivate Image Export mode if it was on (mutually exclusive).
+        if (this.imageExportMode) {
+            this.imageExportMode = false;
+            if (this.toggleImageExportBtn) {
+                this.toggleImageExportBtn.textContent = 'Image Export';
+                this.toggleImageExportBtn.classList.remove('active');
+            }
+            this.imagesSection.style.display = 'none';
+            if (this.canvasOverlay) this.canvasOverlay.enableImageMode(false);
+        }
+
         this.selectionMode = !this.selectionMode;
 
         if (this.canvasOverlay) {
@@ -452,17 +508,46 @@ class UnPlotApp {
         }
 
         if (this.selectionMode) {
-            this.toggleSelectionBtn.textContent = 'Disable Selection';
+            this.toggleSelectionBtn.textContent = 'Disable Curve Selection';
             this.toggleSelectionBtn.classList.add('active');
             this.labelingSection.style.display = 'block';
             this.calibrationSection.style.display = 'block';
-            console.log('Selection mode enabled - click on curves to select and label them');
+            console.log('Curve selection mode enabled');
         } else {
-            this.toggleSelectionBtn.textContent = 'Enable Selection';
+            this.toggleSelectionBtn.textContent = 'Curve Selection';
             this.toggleSelectionBtn.classList.remove('active');
             this.labelingSection.style.display = 'none';
             this.calibrationSection.style.display = 'none';
-            console.log('Selection mode disabled');
+            console.log('Curve selection mode disabled');
+        }
+    }
+
+    toggleImageExportMode() {
+        // Deactivate Curve Selection mode if it was on (mutually exclusive).
+        if (this.selectionMode) {
+            this.selectionMode = false;
+            this.toggleSelectionBtn.textContent = 'Curve Selection';
+            this.toggleSelectionBtn.classList.remove('active');
+            this.labelingSection.style.display = 'none';
+            this.calibrationSection.style.display = 'none';
+            if (this.canvasOverlay) this.canvasOverlay.enableSelectionMode(false);
+        }
+
+        this.imageExportMode = !this.imageExportMode;
+
+        if (this.canvasOverlay) {
+            this.canvasOverlay.enableImageMode(this.imageExportMode);
+        }
+
+        if (this.imageExportMode) {
+            this.toggleImageExportBtn.textContent = 'Disable Image Export';
+            this.toggleImageExportBtn.classList.add('active');
+            // Show the images section (even if empty, to give feedback).
+            this.imagesSection.style.display = 'block';
+        } else {
+            this.toggleImageExportBtn.textContent = 'Image Export';
+            this.toggleImageExportBtn.classList.remove('active');
+            this.imagesSection.style.display = 'none';
         }
     }
 
@@ -483,6 +568,85 @@ class UnPlotApp {
                 console.log(`Selected curve with ${detail.curve.points.length} points - enter a label to save it`);
                 this.curveLabelInput.focus();
             }
+        }
+    }
+
+    handleImageSelection(image) {
+        this.selectedImage = image;
+
+        // Highlight the corresponding row in the Images panel.
+        if (this.imageList) {
+            this.imageList.querySelectorAll('.image-list-item').forEach(li => {
+                li.classList.toggle('active', parseInt(li.dataset.index) === image.imageIndex);
+            });
+        }
+
+        if (this.saveImageBtn) {
+            this.saveImageBtn.disabled = false;
+        }
+
+        console.log(`Selected raster image #${image.imageIndex + 1} ` +
+            `(${image.width}×${image.height} px)`);
+    }
+
+    updateImageList(images) {
+        if (!this.imagesSection || !this.imageList) return;
+
+        this.selectedImage = null;
+        if (this.saveImageBtn) this.saveImageBtn.disabled = true;
+
+        // Section visibility is controlled by toggleImageExportMode(), not here.
+        // Just update the list contents.
+        if (images.length === 0) {
+            this.imageList.innerHTML = '<li class="empty-message">No raster images detected on this page</li>';
+            return;
+        }
+
+        this.imageList.innerHTML = '';
+
+        images.forEach((img, index) => {
+            const { width, height } = img;
+            const li = document.createElement('li');
+            li.className = 'image-list-item';
+            li.dataset.index = index;
+            li.innerHTML = `
+                <span class="image-label">Image ${index + 1}</span>
+                <span class="image-details">${width}&thinsp;&times;&thinsp;${height} px</span>
+            `;
+            li.addEventListener('click', () => {
+                // Clicking the list row selects the image and highlights it on the overlay.
+                const imageWithIndex = { ...img, imageIndex: index };
+                if (this.canvasOverlay) {
+                    this.canvasOverlay.selectedImage = imageWithIndex;
+                    this.canvasOverlay.redraw();
+                }
+                this.handleImageSelection(imageWithIndex);
+            });
+            this.imageList.appendChild(li);
+        });
+    }
+
+    async saveSelectedImageAsPNG() {
+        if (!this.selectedImage) {
+            console.warn('No raster image selected');
+            return;
+        }
+
+        try {
+            const blob = await this.imageExtractor.exportImageAsPNG(this.selectedImage);
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `image_${this.selectedImage.imageIndex + 1}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log(`Saved image ${this.selectedImage.imageIndex + 1} as PNG ` +
+                `(${this.selectedImage.width}×${this.selectedImage.height} px)`);
+        } catch (e) {
+            console.error('PNG export failed:', e);
+            alert(`Could not save image: ${e.message}`);
         }
     }
 

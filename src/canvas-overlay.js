@@ -22,6 +22,12 @@ export class CanvasOverlay {
         this.viewport = null;
         this.rotation = 0; // Add rotation tracking
 
+        // Raster image state
+        this.images = [];          // array of image descriptors from ImageExtractor
+        this.hoveredImage = null;  // image descriptor currently under cursor
+        this.selectedImage = null; // image descriptor that was clicked
+        this.imageMode = false;    // true → Image Export mode (images only, no curves)
+
         this.overlayLineWidth = 5;
         this.highlightLineWidth = 7.5;
         this.highlightPointRadius = 10;
@@ -71,11 +77,10 @@ export class CanvasOverlay {
     setScale(scale) {
         this.scale = scale;
         if (this.page) {
-            this.viewport = this.page.getViewport({ 
+            this.viewport = this.page.getViewport({
                 scale: this.scale,
-                rotation: this.rotation 
+                rotation: this.rotation
             });
-            console.log('Viewport set:', this.viewport.transform);
         }
     }
 
@@ -104,24 +109,36 @@ export class CanvasOverlay {
 
     enableSelectionMode(enabled) {
         this.selectionMode = enabled;
-        this.overlayCanvas.style.pointerEvents = enabled ? 'auto' : 'none';
-
-        if (enabled) {
-            this.redraw();
-        } else {
-            this.clear();
-        }
+        if (enabled) this.imageMode = false; // modes are mutually exclusive
+        this._syncPointerEvents();
+        this.redraw();
     }
 
     enableSingleSelectionMode(enabled) {
         this.selectionMode = enabled;
-        this.overlayCanvas.style.pointerEvents = enabled ? 'auto' : 'none';
+        if (enabled) this.imageMode = false;
+        this._syncPointerEvents();
+        this.redraw();
+    }
 
+    /** Image Export mode: only image bounding boxes are shown and interactive. */
+    enableImageMode(enabled) {
+        this.imageMode = enabled;
         if (enabled) {
-            this.redraw();
+            this.selectionMode = false; // modes are mutually exclusive
+            this.hoveredCurve = null;
+            this.selectedCurve = null;
         } else {
-            this.clear();
+            this.hoveredImage = null;
+            this.selectedImage = null;
         }
+        this._syncPointerEvents();
+        this.redraw();
+    }
+
+    _syncPointerEvents() {
+        this.overlayCanvas.style.pointerEvents =
+            (this.selectionMode || this.imageMode) ? 'auto' : 'none';
     }
 
     drawAllCurves() {
@@ -166,18 +183,27 @@ export class CanvasOverlay {
     }
 
     handleMouseMove(e) {
-        if (!this.selectionMode) return;
+        if (!this.selectionMode && !this.imageMode) return;
 
         const rect = this.overlayCanvas.getBoundingClientRect();
         const scaleX = this.overlayCanvas.width / rect.width;
         const scaleY = this.overlayCanvas.height / rect.height;
-
         const x = (e.clientX - rect.left) * scaleX;
         const y = (e.clientY - rect.top) * scaleY;
 
+        if (this.imageMode) {
+            // Image Export mode: only interact with images.
+            const hoveredImage = this.findImageAtPoint(x, y);
+            if (hoveredImage !== this.hoveredImage) {
+                this.hoveredImage = hoveredImage;
+                this.redraw();
+            }
+            return;
+        }
+
+        // Curve Selection mode: curves only, no image interaction.
         const curves = this.pathExtractor.getCurves();
         const threshold = 25;
-
         let nearestCurve = null;
         let minDistance = threshold;
 
@@ -196,23 +222,32 @@ export class CanvasOverlay {
     }
 
     handleClick() {
-        if (!this.selectionMode || !this.hoveredCurve) return;
+        if (!this.selectionMode && !this.imageMode) return;
+
+        if (this.imageMode) {
+            // Image Export mode: select the hovered image.
+            if (this.hoveredImage) {
+                this.selectedImage = this.hoveredImage;
+                this.redraw();
+                this.overlayCanvas.dispatchEvent(new CustomEvent('imageSelected', {
+                    detail: { image: this.hoveredImage }
+                }));
+            }
+            return;
+        }
+
+        // Curve Selection mode: select the hovered curve.
+        if (!this.hoveredCurve) return;
 
         if (this.multiSelectMode) {
             this.multiSelectedIndices.add(this.hoveredCurve.curveIndex);
         } else {
             this.selectedCurve = this.hoveredCurve;
         }
-
         this.redraw();
-
-        // Dispatch custom event
-        const event = new CustomEvent('curveSelected', {
-            detail: {
-                curve: this.hoveredCurve
-            }
-        });
-        this.overlayCanvas.dispatchEvent(event);
+        this.overlayCanvas.dispatchEvent(new CustomEvent('curveSelected', {
+            detail: { curve: this.hoveredCurve }
+        }));
     }
 
     setMultiSelectMode(enabled) {
@@ -303,8 +338,15 @@ export class CanvasOverlay {
     redraw() {
         this.clear();
 
+        if (this.imageMode) {
+            // Image Export mode: only image bounding boxes, no curves.
+            this.drawAllImages();
+            return;
+        }
+
         if (!this.selectionMode) return;
 
+        // Curve Selection mode: only curves, no image overlays.
         const curves = this.pathExtractor.getCurves();
 
         // Draw all curves
@@ -357,11 +399,131 @@ export class CanvasOverlay {
 
     clearSelection() {
         this.selectedCurve = null;
-        this.hoveredCurve = null;
+        this.hoveredCurve  = null;
+        this.selectedImage = null;
+        this.hoveredImage  = null;
         this.highlightedCurveIndices.clear();
         // multiSelectedIndices is managed separately via clearMultiSelection()
         this.redraw();
     }
+
+    /** Clear image selection only (used when switching away from image mode). */
+    clearImageSelection() {
+        this.selectedImage = null;
+        this.hoveredImage  = null;
+        this.redraw();
+    }
+
+    // ── Raster image support ──────────────────────────────────────────────────
+
+    /**
+     * Provide the list of raster image descriptors extracted by ImageExtractor.
+     * Each descriptor has a `bounds` property with PDF-space corner points
+     * (p0, p1, p2, p3) that this overlay converts to canvas coordinates for
+     * drawing and hit-testing.
+     */
+    setImages(images) {
+        this.images = images || [];
+        this.hoveredImage = null;
+        this.selectedImage = null;
+        this.redraw();
+    }
+
+    /**
+     * Return the canvas-space corners for an image descriptor's bounding quad.
+     */
+    imageCanvasCorners(image) {
+        const { p0, p1, p2, p3 } = image.bounds;
+        return [p0, p1, p2, p3].map(p => this.transformPoint(p.x, p.y));
+    }
+
+    /**
+     * True if the canvas-space point (px, py) lies inside the convex
+     * quadrilateral defined by four canvas-space corners.
+     * Uses consistent cross-product sign for a convex polygon.
+     */
+    isPointInImageQuad(px, py, corners) {
+        let sign = 0;
+        for (let i = 0; i < corners.length; i++) {
+            const a = corners[i];
+            const b = corners[(i + 1) % corners.length];
+            const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+            if (cross === 0) continue;
+            const s = cross > 0 ? 1 : -1;
+            if (sign === 0) {
+                sign = s;
+            } else if (sign !== s) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Find which image (if any) contains canvas-space point (px, py).
+     * Returns the image descriptor or null.
+     */
+    findImageAtPoint(px, py) {
+        for (let i = this.images.length - 1; i >= 0; i--) {
+            const corners = this.imageCanvasCorners(this.images[i]);
+            if (this.isPointInImageQuad(px, py, corners)) {
+                return { ...this.images[i], imageIndex: i };
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Draw the bounding rectangle of a raster image on the overlay.
+     * state: 'normal' | 'hovered' | 'selected'
+     */
+    drawImageRect(image, state) {
+        const ctx = this.overlayContext;
+        const corners = this.imageCanvasCorners(image);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(corners[0].x, corners[0].y);
+        for (let i = 1; i < corners.length; i++) {
+            ctx.lineTo(corners[i].x, corners[i].y);
+        }
+        ctx.closePath();
+
+        if (state === 'selected') {
+            ctx.strokeStyle = 'rgba(255, 0, 0, 0.9)';
+            ctx.fillStyle   = 'rgba(255, 0, 0, 0.08)';
+            ctx.lineWidth   = this.highlightLineWidth;
+        } else if (state === 'hovered') {
+            ctx.strokeStyle = 'rgba(255, 165, 0, 0.9)';
+            ctx.fillStyle   = 'rgba(255, 165, 0, 0.08)';
+            ctx.lineWidth   = this.highlightLineWidth;
+        } else {
+            ctx.strokeStyle = 'rgba(0, 180, 80, 0.4)';
+            ctx.fillStyle   = 'rgba(0, 180, 80, 0.04)';
+            ctx.lineWidth   = this.overlayLineWidth;
+        }
+
+        ctx.setLineDash([8, 4]);
+        ctx.fill();
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
+
+    /**
+     * Draw all detected raster images on the overlay.
+     */
+    drawAllImages() {
+        for (let i = 0; i < this.images.length; i++) {
+            const img = this.images[i];
+            const isSelected = this.selectedImage && this.selectedImage.imageIndex === i;
+            const isHovered  = this.hoveredImage  && this.hoveredImage.imageIndex  === i;
+            const state = isSelected ? 'selected' : isHovered ? 'hovered' : 'normal';
+            this.drawImageRect(img, state);
+        }
+    }
+
+    // ── End raster image support ──────────────────────────────────────────────
 
     destroy() {
         if (this.overlayCanvas && this.overlayCanvas.parentElement) {
