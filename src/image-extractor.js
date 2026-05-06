@@ -194,20 +194,43 @@ export class ImageExtractor {
             }
         }
 
-        // For named XObjects, probe page.objs to discover width/height only.
-        // We do NOT store the ImageBitmap or pixel buffer; those are fetched
-        // on demand when the user saves.  The probe itself is cheap — page.objs
-        // already holds the decoded object; we just read its dimensions.
+        // Probe page.objs for each named XObject to get dimensions AND to
+        // capture an independent copy of the pixel data for export.
+        //
+        // PDF.js calls ImageBitmap.close() on decoded bitmaps when it cleans
+        // up page resources after rendering.  Simply storing a reference to
+        // the original bitmap is not enough — the bitmap is closed (invalidated)
+        // before the user clicks Save.
+        //
+        // Fix: call createImageBitmap(source) inside the probe callback while
+        // the source is still valid.  This creates a new, independent GPU handle
+        // that PDF.js does not own and therefore will never close.  For raw pixel
+        // buffers (data arrays) we just keep the reference — those are not closed.
         const probePromises = imageRefs
             .filter(ref => !ref.isInline && ref.name)
             .map(ref => new Promise(resolve => {
                 try {
-                    page.objs.get(ref.name, data => {
-                        if (data) {
-                            ref.width  = data.width  ?? 0;
-                            ref.height = data.height ?? 0;
+                    page.objs.get(ref.name, async data => {
+                        try {
+                            if (data) {
+                                ref.width  = data.width  ?? 0;
+                                ref.height = data.height ?? 0;
+                                const srcBitmap = (data instanceof ImageBitmap) ? data : data?.bitmap;
+                                if (srcBitmap instanceof ImageBitmap) {
+                                    // createImageBitmap produces an independent copy not owned
+                                    // by PDF.js, so it won't be closed when the page cleans up.
+                                    ref._cachedData = await createImageBitmap(srcBitmap);
+                                } else {
+                                    // Raw pixel buffer — not closed by PDF.js.
+                                    ref._cachedData = data;
+                                }
+                            }
+                        } catch (e) {
+                            console.warn(`ImageExtractor: could not cache "${ref.name}":`, e);
+                            ref._cachedData = data;
+                        } finally {
+                            resolve();
                         }
-                        resolve();
                     });
                 } catch (e) {
                     console.warn(`ImageExtractor: could not probe "${ref.name}"`, e);
@@ -223,66 +246,15 @@ export class ImageExtractor {
     }
 
     /**
-     * Fetch a named image XObject's pixel data on demand and return it.
-     *
-     * PDF.js 4.x stores decoded images as ImageBitmap objects in page.objs.
-     * The bitmap is closed by PDF.js after rendering (to free GPU memory), so
-     * we cannot rely on it still being valid at save time.  When it has been
-     * closed we force a fresh decode by calling page.cleanup() followed by
-     * page.getOperatorList(), which causes PDF.js to re-parse the image stream
-     * and place a new, open ImageBitmap back into page.objs.
-     */
-    async _fetchNamedImageData(name, pageNum) {
-        const pdfDoc = this.pdfLoader.pdfDocument;
-        if (!pdfDoc) throw new Error('No PDF document loaded');
-
-        const page = await pdfDoc.getPage(pageNum);
-
-        // First attempt: trigger resource loading and read from cache.
-        await page.getOperatorList();
-
-        let imgData = await new Promise(resolve => page.objs.get(name, resolve));
-
-        // Test whether the ImageBitmap (if present) is still usable.
-        // PDF.js may return the bitmap directly OR wrapped in {bitmap, width, height, ...}.
-        const bitmap = (imgData instanceof ImageBitmap) ? imgData : imgData?.bitmap;
-        if (bitmap instanceof ImageBitmap) {
-            const valid = await this._bitmapIsUsable(bitmap);
-            if (valid) return imgData;
-
-            // The bitmap was closed by a prior render.  Re-parse the stream.
-            console.log(`ImageExtractor: bitmap for "${name}" was detached — re-parsing page ${pageNum}`);
-            page.cleanup();
-            await page.getOperatorList();
-            imgData = await new Promise(resolve => page.objs.get(name, resolve));
-        }
-
-        return imgData;
-    }
-
-    /** True if the ImageBitmap can still be drawn (i.e. has not been closed). */
-    async _bitmapIsUsable(bitmap) {
-        try {
-            const test = new OffscreenCanvas(1, 1);
-            test.getContext('2d').drawImage(bitmap, 0, 0, 1, 1, 0, 0, 1, 1);
-            return true;
-        } catch {
-            return false;
-        }
-    }
-
-    /**
      * Export the image described by imageRef as a lossless PNG Blob.
      *
-     * The pixel data is fetched from the PDF on demand here — nothing is
-     * pre-allocated at page-load time.  A single OffscreenCanvas is created
-     * for the duration of this call and is garbage-collected once the Blob
-     * has been produced.
-     *
-     * Why OffscreenCanvas for ImageBitmap?  The ImageBitmap API intentionally
-     * does not expose raw pixel bytes — drawing to a canvas is the only
-     * browser-standard way to access them.  The canvas is required to both
-     * read the pixels AND to obtain PNG-encoded output via convertToBlob().
+     * Named XObjects: PDF.js calls ImageBitmap.close() on all decoded bitmaps
+     * and clears page.objs after page.render() completes.  The only reliable
+     * way to hold on to pixel data is to call createImageBitmap() inside the
+     * page.objs.get() callback during extractImages() — that creates an
+     * independent GPU handle not owned by PDF.js.  For images PDF.js delivers
+     * as raw pixel arrays (no bitmap), the reference is kept directly.  Both
+     * are stored in _cachedData.
      */
     async exportImageAsPNG(imageRef) {
         // ── Inline images (including mask images) ───────────────────────────
@@ -290,9 +262,7 @@ export class ImageExtractor {
             const d = imageRef.inlineData;
             if (!d) throw new Error('Inline image has no stored data');
             if (d.bitmap instanceof ImageBitmap) {
-                const offscreen = new OffscreenCanvas(d.width, d.height);
-                offscreen.getContext('2d').drawImage(d.bitmap, 0, 0);
-                return offscreen.convertToBlob({ type: 'image/png' });
+                return this._bitmapToBlob(d.bitmap, d.width, d.height);
             }
             if (imageRef.isMask) {
                 return this._maskDataToBlob(d);
@@ -301,26 +271,26 @@ export class ImageExtractor {
             return this._rawDataToBlob(d.width, d.height, d.data, d.kind);
         }
 
-        // ── Named XObject images (on-demand fetch) ──────────────────────────
+        // ── Named XObject images ─────────────────────────────────────────────
         const { name, pageNum, width, height, isMask } = imageRef;
-        const imgData = await this._fetchNamedImageData(name, pageNum);
+
+        const imgData = imageRef._cachedData ?? null;
+        console.log(`ImageExtractor: exporting "${name}" (${width}×${height}) — cached=${!!imgData} …`);
 
         if (!imgData) throw new Error(`Image "${name}" could not be retrieved from the PDF`);
 
-        // imgData can come back as an ImageBitmap directly OR as a wrapper object.
         const bitmap = (imgData instanceof ImageBitmap) ? imgData : imgData?.bitmap;
 
         if (bitmap instanceof ImageBitmap) {
             const w = imgData?.width || width;
             const h = imgData?.height || height;
-            const offscreen = new OffscreenCanvas(w, h);
-            offscreen.getContext('2d').drawImage(bitmap, 0, 0);
-            return offscreen.convertToBlob({ type: 'image/png' });
+            return this._bitmapToBlob(bitmap, w, h);
         }
 
         if (imgData?.data) {
             const w = imgData.width  || width;
             const h = imgData.height || height;
+            console.log(`ImageExtractor: encoding raw pixel buffer (${w}×${h}, kind=${imgData.kind ?? 'default'}) …`);
             if (isMask) {
                 return this._maskDataToBlob({
                     width: w, height: h,
@@ -333,6 +303,22 @@ export class ImageExtractor {
         }
 
         throw new Error(`Image "${name}" has neither an ImageBitmap nor raw pixel data`);
+    }
+
+    /** Encode an ImageBitmap as a PNG Blob via OffscreenCanvas.convertToBlob. */
+    async _bitmapToBlob(bitmap, w, h) {
+        const offscreen = new OffscreenCanvas(w, h);
+        const ctx = offscreen.getContext('2d');
+        if (!ctx) throw new Error(`Failed to get 2D context for ${w}×${h} canvas`);
+        ctx.drawImage(bitmap, 0, 0);
+        const blob = await Promise.race([
+            offscreen.convertToBlob({ type: 'image/png' }),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error('convertToBlob timed out')), 30000)
+            ),
+        ]);
+        if (!blob || blob.size === 0) throw new Error(`convertToBlob returned empty for ${w}×${h}`);
+        return blob;
     }
 
     /**
