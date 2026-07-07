@@ -17,8 +17,11 @@ export class PDFLoader {
 
     async initPDFJS() {
         try {
-            // Import PDF.js from CDN using ES modules
-            this.pdfjsLib = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/+esm');
+            // Import PDF.js from CDN using ES modules.
+            // Use the official ESM build directly — the jsdelivr "+esm" re-bundle
+            // injects a `process` shim that makes PDF.js think it is running in
+            // Node.js, which breaks canvas creation for PDFs with embedded images.
+            this.pdfjsLib = await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs');
             
             // Configure the worker
             this.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';

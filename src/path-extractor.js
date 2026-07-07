@@ -558,7 +558,7 @@ export class PathExtractor {
     }
 
     getOperationName(fn) {
-        const OPS = window.pdfjsLib.OPS;
+        const OPS = this.pdfLoader.OPS;
         const opNames = {
             [OPS.stroke]: 'stroke',
             [OPS.fill]: 'fill',
