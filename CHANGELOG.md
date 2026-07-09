@@ -6,6 +6,16 @@ The format is inspired by [Keep a Changelog](https://keepachangelog.com/en/1.0.0
 
 ---
 
+## [1.6.0] - 2026-07-09
+
+### Added
+- Dump images at full resolution to PNG
+
+### Fixed
+- Some files with embedded images would fail to display.  Thanks spacerokk
+
+---
+
 ## [1.5.0] - 2026-03-26
 
 ### Added
